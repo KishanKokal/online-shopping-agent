@@ -74,24 +74,34 @@ class ProductSearchView(APIView):
                     
                     # Create and configure the browser automation agent
                     agent: Agent = Agent(
-                        task=f"""Visit {website_url} and perform a search for '{search_query}'. 
-    
-                        INSTRUCTIONS:
-                        1. Navigate to the exact URL: {website_url}
-                        2. Locate the search box on the page
-                        3. Enter the exact query: '{search_query}' (without quotes)
-                        4. Press enter or click the search button
-                        5. Analyze the search results page
-                        6. Extract up to 10 most relevant products/items from the search results
-                        7. Focus on the products displayed on the first page
-                        
-                        When extracting data:
-                        - Capture up to 10 most relevant products that best match the search criteria
-                        - Prioritize products that appear at the top of the search results
-                        - Ensure the data is formatted according to the provided schema
-                        - Return the data as valid JSON following this schema:
-                        {Products.model_json_schema()}
-                        """,
+                        task=f"""
+INSTRUCTIONS FOR DATA COLLECTION:
+
+When conducting a search on {website_url}, follow these steps to extract relevant product information:
+
+1. Navigate to the website: Open {website_url} in a browser.
+2. Perform a search: Locate the search box and enter the exact query: '{search_query}'. Press enter or click the search button.
+3. Analyze the search results page: Focus on the first page and extract up to 10 most relevant products. Prioritize top-ranking results.
+4. Extract the following details for each product:
+
+   - Product Name: The name of the product as displayed on the website.
+   - Product URL: The complete HTTPS link to the product's dedicated page.
+   - Product Image URL: The full HTTPS link to the product's main image.
+   - Maximum Retail Price (MRP): The original price before discounts (if available).
+   - Discount Percentage: The percentage of discount applied (if any, otherwise 0).
+   - Selling Price: The current price at which the product is being sold.
+   - Sourced From: The name of the e-commerce platform where the product is listed.
+
+5. If no products match the search criteria, **do not return anything**.
+
+
+6. Ensure Accuracy & Formatting:
+   - Extract only relevant products matching the search query.
+   - Verify that URLs are complete and lead to the correct product pages.
+   - Ensure numerical values (MRP, discount, selling price) are correctly formatted.
+   - Return the data in valid JSON format based on the provided schema.
+    {Products.model_json_schema()}
+""",
                         llm=llm,
                         controller=controller,
                         use_vision=False,
@@ -111,6 +121,7 @@ class ProductSearchView(APIView):
                             if not product.maximum_retail_price:
                                 product.maximum_retail_price = product.selling_price
                             product.discount_percentage = round(((product.maximum_retail_price - product.selling_price) / product.maximum_retail_price) * 100, 2)
+                        parsed.products.sort(key=lambda p: p.selling_price)
                         return parsed.products
                     return []
                 except Exception as e:
@@ -133,6 +144,16 @@ class ProductSearchView(APIView):
             
             # Execute the concurrent search across all websites
             asyncio.run(search_all_websites())
+            
+            # Get the structured query to access max_price
+            structured_query = serializer.to_structured_query()
+            
+            # Filter products based on max_price if it's set
+            if structured_query.max_price is not None and structured_query.max_price > 0:
+                all_products = [
+                    product for product in all_products 
+                    if product.selling_price <= structured_query.max_price
+                ]
             
             # Serialize and return the results
             response_serializer: ProductResponseSerializer = ProductResponseSerializer(all_products, many=True)
