@@ -38,7 +38,7 @@ class ProductSearchView(APIView):
         Handle POST requests for product search.
         
         Args:
-            request: HTTP request containing search query and target websites
+            request: HTTP request containing search query
             
         Returns:
             Response: JSON response containing search results or error message
@@ -49,9 +49,8 @@ class ProductSearchView(APIView):
             if not serializer.is_valid():
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
-            # Extract validated data from request
-            query: str = serializer.validated_data['query']
-            websites: List[str] = serializer.validated_data['websites']
+            # Convert the query to a structured format and then to a search string
+            search_query: str = serializer.to_search_string()
             
             # Initialize the language model and controller for browser automation
             llm: ChatOpenAI = ChatOpenAI(model=LLM_MODEL)
@@ -60,25 +59,37 @@ class ProductSearchView(APIView):
             # List to store all found products
             all_products: List[Dict[str, Any]] = []
             
-            async def search_website(website: str) -> List[Dict[str, Any]]:
+            async def search_website(website: SourcedFromEnum) -> List[Dict[str, Any]]:
                 """
                 Search for products on a specific website using browser automation.
                 
                 Args:
-                    website: Name of the website to search on
+                    website: Enum representing the website to search on
                     
                 Returns:
                     list: List of products found on the website
                 """
                 try:
-                    # Convert website name to enum and get corresponding URL
-                    website_enum: SourcedFromEnum = SourcedFromEnum(website)
-                    website_url: str = self.get_website_url(website_enum)
+                    website_url: str = WEBSITE_URLS[website]
                     
                     # Create and configure the browser automation agent
                     agent: Agent = Agent(
-                        task=f"""Go to {website_url} exactly enter the following query '{query}' in the search box and press enter and, return the top 10 results in JSON format:
-                        - extract and return the information in a **valid JSON** following the schema:
+                        task=f"""Visit {website_url} and perform a search for '{search_query}'. 
+    
+                        INSTRUCTIONS:
+                        1. Navigate to the exact URL: {website_url}
+                        2. Locate the search box on the page
+                        3. Enter the exact query: '{search_query}' (without quotes)
+                        4. Press enter or click the search button
+                        5. Analyze the search results page
+                        6. Extract up to 10 most relevant products/items from the search results
+                        7. Focus on the products displayed on the first page
+                        
+                        When extracting data:
+                        - Capture up to 10 most relevant products that best match the search criteria
+                        - Prioritize products that appear at the top of the search results
+                        - Ensure the data is formatted according to the provided schema
+                        - Return the data as valid JSON following this schema:
                         {Products.model_json_schema()}
                         """,
                         llm=llm,
@@ -96,6 +107,10 @@ class ProductSearchView(APIView):
                     # Parse and return results if available
                     if result:
                         parsed: Products = Products.model_validate_json(result)
+                        for product in parsed.products:
+                            if not product.maximum_retail_price:
+                                product.maximum_retail_price = product.selling_price
+                            product.discount_percentage = round(((product.maximum_retail_price - product.selling_price) / product.maximum_retail_price) * 100, 2)
                         return parsed.products
                     return []
                 except Exception as e:
@@ -106,7 +121,12 @@ class ProductSearchView(APIView):
                 """
                 Search for products across all specified websites concurrently.
                 """
-                tasks: List[asyncio.Task[List[Dict[str, Any]]]] = [search_website(website) for website in websites]
+                websites_to_search = serializer.get_source_websites()
+                
+                tasks: List[asyncio.Task[List[Dict[str, Any]]]] = [
+                    search_website(website) for website in websites_to_search
+                ]
+                
                 results: List[List[Dict[str, Any]]] = await asyncio.gather(*tasks)
                 for products in results:
                     all_products.extend(products)
