@@ -83,7 +83,7 @@ export default function Home() {
                   e.preventDefault(); // Prevent form submission (if needed)
                 }
               }}
-              className="w-full bg-[#1e1e1e] border border-[#333] rounded-xl py-3 px-6 text-white focus:outline-none"
+              className="w-full bg-[#1e1e1e] border border-[#333] rounded-xl py-3 px-6 pr-13 text-white focus:outline-none"
             />
             <button
               className="absolute right-4 top-1/2 -translate-y-1/2"
