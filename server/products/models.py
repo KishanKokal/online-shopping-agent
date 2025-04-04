@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional
 from enum import Enum
 
 class SizeEnum(str, Enum):
@@ -53,3 +53,8 @@ class Product(BaseModel):
 
 class Products(BaseModel):
     products: List[Product]
+
+# Define a validation model for query safety checks
+class QueryValidationResult(BaseModel):
+    is_safe: bool = Field(description="Whether the query is a legitimate product search")
+    reason: Optional[str] = Field(None, description="Reason why query was rejected if unsafe")
