@@ -26,11 +26,11 @@ class ProductSearchSerializer(serializers.Serializer):
                     Extract relevant information about:
                     - item name, colors, sizes, price range, material, and gender from the query
                     - e-commerce platforms mentioned in the query
-                    - identify if the query mentions any platforms not in our supported list (myntra, meesho, ajio)
+                    - identify if the query mentions any platforms not in our supported list (myntra, meesho, ajio, flipkart)
                     
                     For platforms, you should:
                     1. Identify all platforms mentioned in the query
-                    2. Separate them into supported (myntra, meesho, ajio) and unsupported platforms
+                    2. Separate them into supported (myntra, meesho, ajio, flipkart) and unsupported platforms
                     3. Set has_only_unsupported_platforms to true if the query only mentions unsupported platforms
                     4. Set source_from to the list of supported platforms mentioned
                     5. Set unsupported_platforms to the list of unsupported platforms mentioned
@@ -39,7 +39,7 @@ class ProductSearchSerializer(serializers.Serializer):
                     {
                         "item_name": "tshirts",
                         "source_from": [],
-                        "unsupported_platforms": ["amazon", "flipkart"],
+                        "unsupported_platforms": ["amazon"],
                         "has_only_unsupported_platforms": true
                     }
                     

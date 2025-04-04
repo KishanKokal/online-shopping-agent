@@ -19,6 +19,7 @@ class SourcedFromEnum(str, Enum):
     myntra = "myntra"
     meesho = "meesho"
     ajio = "ajio"
+    flipkart = "flipkart"
 
 class StructuredSearchQuery(BaseModel):
     item_name: str

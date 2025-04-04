@@ -22,8 +22,9 @@ WEBSITE_URLS: Dict[SourcedFromEnum, str] = {
     SourcedFromEnum.ajio: "https://www.ajio.com",
     SourcedFromEnum.meesho: "https://www.meesho.com",
     SourcedFromEnum.myntra: "https://www.myntra.com",
+    SourcedFromEnum.flipkart: "https://www.flipkart.com"
 }
-LLM_MODEL: str = "gpt-4o"
+LLM_MODEL: str = "gpt-4o-mini"
 
 # Load environment variables from .env file
 load_dotenv()
@@ -80,7 +81,7 @@ INSTRUCTIONS FOR DATA COLLECTION:
 When conducting a search on {website_url}, follow these steps to extract relevant product information:
 
 1. Navigate to the website: Open {website_url} in a browser.
-2. Perform a search: Locate the search box and enter the exact query: '{search_query}'. Press enter or click the search button.
+2. Perform a search: Locate the search box and enter the exact query: '{search_query}'. Please press enter key next after entering the query.
 3. Analyze the search results page: Focus on the first page and extract up to 10 most relevant products. Prioritize top-ranking results.
 4. Extract the following details for each product:
 
@@ -104,7 +105,7 @@ When conducting a search on {website_url}, follow these steps to extract relevan
 """,
                         llm=llm,
                         controller=controller,
-                        use_vision=False,
+                        use_vision=True,
                         initial_actions=[
                             {"open_tab": {"url": website_url}},
                         ],
