@@ -22,7 +22,34 @@ class ProductSearchSerializer(serializers.Serializer):
             messages=[
                 {
                     'role': 'system',
-                    'content': "You are a helpful assistant that helps standardize a user's query into a structured format. Extract relevant information about item name, colors, sizes, price range, material, and gender from the query."
+                    'content': """You are a helpful assistant that helps standardize a user's query into a structured format. 
+                    Extract relevant information about:
+                    - item name, colors, sizes, price range, material, and gender from the query
+                    - e-commerce platforms mentioned in the query
+                    - identify if the query mentions any platforms not in our supported list (myntra, meesho, ajio)
+                    
+                    For platforms, you should:
+                    1. Identify all platforms mentioned in the query
+                    2. Separate them into supported (myntra, meesho, ajio) and unsupported platforms
+                    3. Set has_only_unsupported_platforms to true if the query only mentions unsupported platforms
+                    4. Set source_from to the list of supported platforms mentioned
+                    5. Set unsupported_platforms to the list of unsupported platforms mentioned
+                    
+                    Example response for "search for tshirts on amazon and flipkart":
+                    {
+                        "item_name": "tshirts",
+                        "source_from": [],
+                        "unsupported_platforms": ["amazon", "flipkart"],
+                        "has_only_unsupported_platforms": true
+                    }
+                    
+                    Example response for "search for tshirts on myntra and amazon":
+                    {
+                        "item_name": "tshirts",
+                        "source_from": ["myntra"],
+                        "unsupported_platforms": ["amazon"],
+                        "has_only_unsupported_platforms": false
+                    }"""
                 },
                 {
                     'role': 'user',
@@ -38,7 +65,10 @@ class ProductSearchSerializer(serializers.Serializer):
             return StructuredSearchQuery(**parsed_data)
         except Exception as e:
             # If parsing fails, create a basic query with just the item name
-            return StructuredSearchQuery(item_name=self.validated_data['query'])
+            return StructuredSearchQuery(
+                item_name=self.validated_data['query'],
+                has_only_unsupported_platforms=False
+            )
     
     def to_search_string(self) -> str:
         """
@@ -69,23 +99,33 @@ class ProductSearchSerializer(serializers.Serializer):
             
         return " ".join(parts)
     
-    def get_source_websites(self) -> list[SourcedFromEnum]:
+    def get_source_websites(self) -> tuple[list[SourcedFromEnum], str | None]:
         """
-        Get the list of websites to source products from.
+        Get the list of websites to source products from and check for unsupported platforms.
         If source_from is None or empty, return all available websites.
-        Otherwise, return the list of websites specified in the query.
+        Otherwise, return the list of supported websites specified in the query and a message about unsupported platforms.
         
         Returns:
-            list[SourcedFromEnum]: List of websites to source products from
+            tuple[list[SourcedFromEnum], str | None]: List of supported websites to source products from and a message about unsupported platforms
         """
         structured_query = self.to_structured_query()
         
-        # If source_from is None or empty, return all available websites
-        if not structured_query.source_from:
-            return list(SourcedFromEnum)
+        # If source_from is None or empty and no unsupported platforms, return all available websites
+        if not structured_query.source_from and not structured_query.unsupported_platforms:
+            return list(SourcedFromEnum), None
         
-        # Return the list of websites specified in the query
-        return structured_query.source_from
+        # If there are unsupported platforms, create a message
+        message = None
+        if structured_query.unsupported_platforms:
+            unsupported_list = ", ".join(structured_query.unsupported_platforms)
+            message = f"We currently don't support the following platforms: {unsupported_list}. We're working on adding support for these platforms."
+        
+        # If no supported platforms were requested, return empty list with message
+        if not structured_query.source_from:
+            return [], message
+        
+        # Return supported platforms and message about unsupported ones
+        return list(structured_query.source_from), message
 
 # Serializer for formatting product search results
 # Used to structure and validate product data before sending to clients

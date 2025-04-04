@@ -132,7 +132,11 @@ When conducting a search on {website_url}, follow these steps to extract relevan
                 """
                 Search for products across all specified websites concurrently.
                 """
-                websites_to_search = serializer.get_source_websites()
+                websites_to_search, unsupported_message = serializer.get_source_websites()
+                
+                # If no supported platforms were requested, return early
+                if not websites_to_search:
+                    return
                 
                 tasks: List[asyncio.Task[List[Dict[str, Any]]]] = [
                     search_website(website) for website in websites_to_search
@@ -155,9 +159,16 @@ When conducting a search on {website_url}, follow these steps to extract relevan
                     if product.selling_price <= structured_query.max_price
                 ]
             
+            # Get the unsupported platforms message
+            _, unsupported_message = serializer.get_source_websites()
+            
             # Serialize and return the results
             response_serializer: ProductResponseSerializer = ProductResponseSerializer(all_products, many=True)
-            return Response(response_serializer.data)
+            response_data = {
+                "products": response_serializer.data,
+                "message": unsupported_message
+            }
+            return Response(response_data)
             
         except Exception as e:
             logger.error(f"Unexpected error in product search: {str(e)}")

@@ -29,6 +29,8 @@ class StructuredSearchQuery(BaseModel):
     material: str | None = None
     gender: GenderEnum | None = None
     source_from: List[SourcedFromEnum] | None = None
+    unsupported_platforms: List[str] | None = None
+    has_only_unsupported_platforms: bool
 
 class Product(BaseModel):
     product_name: str = Field(description="Name of the product")

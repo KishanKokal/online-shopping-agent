@@ -23,10 +23,16 @@ interface SearchRequestDto {
   query: string;
 }
 
+interface SearchResponseDto {
+  products: Product[];
+  message?: string;
+}
+
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [products, setProducts] = useState<Product[]>([]);
-  const [searching, setSearching] = useState(false);
+  const [searching, setSearching] = useState<boolean>(false);
+  const [message, setMessage] = useState<string | undefined>();
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -37,11 +43,12 @@ export default function Home() {
     inputRef.current?.blur();
     setSearching(true);
     try {
-      const response = await axios.post<Product[]>(
+      const response = await axios.post<SearchResponseDto>(
         'http://localhost:8000/api/search/',
         searchRequest
       );
-      setProducts(response.data);
+      setProducts(response.data.products);
+      setMessage(response.data.message);
     } catch (e) {
       console.log((e as Error).message);
     } finally {
@@ -54,38 +61,45 @@ export default function Home() {
       <div className="max-w-6xl mx-auto">
         {/* Header with Logo */}
         <header className="flex justify-center items-center mb-10 mt-6">
-          <img
-            src={logo}
-            alt="Logo"
-            className="h-20 w-auto border border-white rounded-full"
-          />
+          <img src={logo} alt="Logo" className="h-40 w-auto" />
         </header>
 
         {/* Search Bar */}
-        <div className="relative mb-8">
-          <input
-            type="text"
-            ref={inputRef}
-            placeholder="Search..."
-            value={searchQuery}
-            onChange={e => {
-              e.preventDefault(); // Prevent form submission (if needed)
-              setSearchQuery(e.target.value);
-            }}
-            onKeyDown={e => {
-              if (e.key === 'Enter') {
-                fetchProdutcs();
+        <div className="w-full flex justify-center">
+          <div className="w-full max-w-2xl relative mb-8">
+            <input
+              type="text"
+              ref={inputRef}
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={e => {
                 e.preventDefault(); // Prevent form submission (if needed)
-              }
-            }}
-            className="w-full bg-[#1e1e1e] border border-[#333] rounded-full py-3 px-6 text-white focus:outline-none"
-          />
-          <button
-            className="absolute right-4 top-1/2 -translate-y-1/2"
-            onClick={fetchProdutcs}
-          >
-            <Search className="w-6 h-6 text-white" />
-          </button>
+                setSearchQuery(e.target.value);
+                setMessage('');
+              }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  fetchProdutcs();
+                  e.preventDefault(); // Prevent form submission (if needed)
+                }
+              }}
+              className="w-full bg-[#1e1e1e] border border-[#333] rounded-xl py-3 px-6 text-white focus:outline-none"
+            />
+            <button
+              className="absolute right-4 top-1/2 -translate-y-1/2"
+              onClick={fetchProdutcs}
+            >
+              <Search className="w-6 h-6 text-white" />
+            </button>
+          </div>
+        </div>
+
+        <div className="w-full flex justify-center">
+          {message && (
+            <div className="w-full max-w-2xl p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-yellow-500 mb-10">
+              {message}
+            </div>
+          )}
         </div>
 
         {/* Product Grid */}
