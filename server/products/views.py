@@ -76,33 +76,33 @@ class ProductSearchView(APIView):
                     # Create and configure the browser automation agent
                     agent: Agent = Agent(
                         task=f"""
-INSTRUCTIONS FOR DATA COLLECTION:
+                        INSTRUCTIONS FOR DATA COLLECTION:
 
-When conducting a search on {website_url}, follow these steps to extract relevant product information:
+                        When conducting a search on {website_url}, follow these steps to extract relevant product information:
 
-1. Navigate to the website: Open {website_url} in a browser.
-2. Perform a search: Locate the search box and enter the exact query: '{search_query}'. Please press enter key next after entering the query.
-3. Analyze the search results page: Focus on the first page and extract up to 10 most relevant products. Prioritize top-ranking results.
-4. Extract the following details for each product:
+                        1. Navigate to the website: Open {website_url} in a browser.
+                        2. Perform a search: Locate the search box and enter the exact query: '{search_query}'. Please press enter key next after entering the query.
+                        3. Analyze the search results page: Focus on the first page and extract up to 10 most relevant products. Prioritize top-ranking results.
+                        4. Extract the following details for each product:
 
-   - Product Name: The name of the product as displayed on the website.
-   - Product URL: The complete HTTPS link to the product's dedicated page.
-   - Product Image URL: The full HTTPS link to the product's main image.
-   - Maximum Retail Price (MRP): The original price before discounts (if available).
-   - Discount Percentage: The percentage of discount applied (if any, otherwise 0).
-   - Selling Price: The current price at which the product is being sold.
-   - Sourced From: The name of the e-commerce platform where the product is listed.
+                        - Product Name: The name of the product as displayed on the website.
+                        - Product URL: The complete HTTPS link to the product's dedicated page.
+                        - Product Image URL: The full HTTPS link to the product's main image.
+                        - Maximum Retail Price (MRP): The original price before discounts (if available).
+                        - Discount Percentage: The percentage of discount applied (if any, otherwise 0).
+                        - Selling Price: The current price at which the product is being sold.
+                        - Sourced From: The name of the e-commerce platform where the product is listed.
 
-5. If no products match the search criteria, **do not return anything**.
+                        5. If no products match the search criteria, **do not return anything**.
 
 
-6. Ensure Accuracy & Formatting:
-   - Extract only relevant products matching the search query.
-   - Verify that URLs are complete and lead to the correct product pages.
-   - Ensure numerical values (MRP, discount, selling price) are correctly formatted.
-   - Return the data in valid JSON format based on the provided schema.
-    {Products.model_json_schema()}
-""",
+                        6. Ensure Accuracy & Formatting:
+                        - Extract only relevant products matching the search query.
+                        - Verify that URLs are complete and lead to the correct product pages.
+                        - Ensure numerical values (MRP, discount, selling price) are correctly formatted.
+                        - Return the data in valid JSON format based on the provided schema.
+                            {Products.model_json_schema()}
+                        """,
                         llm=llm,
                         controller=controller,
                         use_vision=True,
