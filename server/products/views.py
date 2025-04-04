@@ -23,7 +23,7 @@ WEBSITE_URLS: Dict[SourcedFromEnum, str] = {
     SourcedFromEnum.meesho: "https://www.meesho.com",
     SourcedFromEnum.myntra: "https://www.myntra.com",
 }
-LLM_MODEL: str = "gpt-4o-mini"
+LLM_MODEL: str = "gpt-4o"
 
 # Load environment variables from .env file
 load_dotenv()
