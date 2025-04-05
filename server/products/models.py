@@ -62,7 +62,7 @@ class StructuredSearchQuery(BaseModel):
     )
 
 class Product(BaseModel):
-    product_name: str = Field(description="Name of the product")
+    product_name: str = Field(description="Name of the product. It should capture the most relevant product description from the query, including any key modifiers (e.g., 'oversized t-shirts', 'running shoes', 'slim fit jeans')")
     product_url: str = Field(
         description="URL to the product page (complete https link)"
     )

@@ -36,36 +36,53 @@ class ProductSearchSerializer(serializers.Serializer):
                 Return a JSON object strictly following the StructuredSearchQuery model structure. Do not include additional fields not in the model. Set fields to null when no relevant information is found, except for has_only_unsupported_platforms which must be a boolean.
 
                 IMPORTANT INSTRUCTIONS:
-                You can always return null for values that are not explicitly mentioned by the user like if the user doesn't mention the sizes in the query, return a null value
+                - You can always return null for values that are not explicitly mentioned by the user like if the user doesn't mention the sizes in the query, return a null value
+                - The **item_name** field should capture the most relevant product description from the query, including any key modifiers (e.g., "oversized t-shirts", "running shoes", "slim fit jeans"). It should reflect what the user is specifically looking for and not be overly generalized.
+
                 
                 EXAMPLE OUTPUTS:
                 Query: "find men's black jeans under 2000 on flipkart"
                 {{
-                "item_name": "jeans",
-                "item_colors": ["black"],
-                "item_sizes": null,
-                "min_price": null,
-                "max_price": 2000,
-                "material": null,
-                "gender": "men",
-                "source_from": ["flipkart"],
-                "unsupported_platforms": null,
-                "has_only_unsupported_platforms": false
+                    "item_name": "jeans",
+                    "item_colors": ["black"],
+                    "item_sizes": null,
+                    "min_price": null,
+                    "max_price": 2000,
+                    "material": null,
+                    "gender": "men",
+                    "source_from": ["flipkart"],
+                    "unsupported_platforms": null,
+                    "has_only_unsupported_platforms": false
                 }}
 
                 Query: "white cotton t-shirts on amazon between 500 and 1500"
                 {{
-                "item_name": "t-shirts",
-                "item_colors": ["white"],
-                "item_sizes": null,
-                "min_price": 500,
-                "max_price": 1500,
-                "material": "cotton",
-                "gender": null,
-                "source_from": [],
-                "unsupported_platforms": ["amazon"],
-                "has_only_unsupported_platforms": true
+                    "item_name": "t-shirts",
+                    "item_colors": ["white"],
+                    "item_sizes": null,
+                    "min_price": 500,
+                    "max_price": 1500,
+                    "material": "cotton",
+                    "gender": null,
+                    "source_from": [],
+                    "unsupported_platforms": ["amazon"],
+                    "has_only_unsupported_platforms": true
                 }}
+
+                Query: "search for men oversized t-shirts under 1000rs on myntra"
+                {{
+                    "item_name": "oversized t-shirts",
+                    "item_colors": null,
+                    "item_sizes": null,
+                    "min_price": null,
+                    "max_price": 1000,
+                    "material": null,
+                    "gender": "men",
+                    "source_from": ["myntra"],
+                    "unsupported_platforms": null,
+                    "has_only_unsupported_platforms": false
+                }}
+
                 """
                     },
                     {
@@ -80,6 +97,7 @@ class ProductSearchSerializer(serializers.Serializer):
             
         except Exception as e:
             # If parsing fails, create a basic query with just the item name
+            print("Error converting to structured query")
             return StructuredSearchQuery(
                 item_name=query,
                 has_only_unsupported_platforms=False

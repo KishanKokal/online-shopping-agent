@@ -26,7 +26,7 @@ WEBSITE_URLS: Dict[SourcedFromEnum, str] = {
     SourcedFromEnum.myntra: "https://www.myntra.com",
     SourcedFromEnum.flipkart: "https://www.flipkart.com"
 }
-LLM_MODEL: str = "gpt-4o"
+LLM_MODEL: str = "gpt-4o-mini"
 
 # Load environment variables from .env file
 load_dotenv()
