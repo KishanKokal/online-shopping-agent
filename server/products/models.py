@@ -22,16 +22,44 @@ class SourcedFromEnum(str, Enum):
     flipkart = "flipkart"
 
 class StructuredSearchQuery(BaseModel):
-    item_name: str
-    item_colors: List[str] | None = None
-    item_sizes: List[SizeEnum] | None = None
-    min_price: int | float | None = None
-    max_price: int | float | None = None
-    material: str | None = None
-    gender: GenderEnum | None = None
-    source_from: List[SourcedFromEnum] | None = None
-    unsupported_platforms: List[str] | None = None
-    has_only_unsupported_platforms: bool
+    item_name: str = Field(
+        description="The specific product being searched for (e.g., jeans, t-shirt, sneakers)"
+    )
+    item_colors: Optional[List[str]] = Field(
+        default=None,
+        description="List of colors mentioned in the query (e.g., red, blue, black)"
+    )
+    item_sizes: Optional[List[SizeEnum]] = Field(
+        default=None,
+        description="List of size specifications mentioned in the query"
+    )
+    min_price: Optional[float] = Field(
+        default=None,
+        description="Minimum price constraint specified in the query"
+    )
+    max_price: Optional[float] = Field(
+        default=None,
+        description="Maximum price constraint specified in the query"
+    )
+    material: Optional[str] = Field(
+        default=None,
+        description="Fabric or material preference mentioned in the query (e.g., cotton, leather)"
+    )
+    gender: Optional[GenderEnum] = Field(
+        default=None,
+        description="Target gender for the product (men, women, kids, or unisex)"
+    )
+    source_from: Optional[List[SourcedFromEnum]] = Field(
+        default=None,
+        description="List of supported e-commerce platforms mentioned in the query"
+    )
+    unsupported_platforms: Optional[List[str]] = Field(
+        default=None,
+        description="List of e-commerce platforms mentioned that aren't in our supported list"
+    )
+    has_only_unsupported_platforms: bool = Field(
+        description="True if query mentions platforms but none are supported, False otherwise"
+    )
 
 class Product(BaseModel):
     product_name: str = Field(description="Name of the product")

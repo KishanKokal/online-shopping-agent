@@ -23,18 +23,50 @@ class ProductSearchSerializer(serializers.Serializer):
                 messages=[
                     {
                         'role': 'system',
-                        'content': """You are a helpful assistant that helps standardize a user's query into a structured format. 
-                        Extract relevant information about:
-                        - item name, colors, sizes, price range, material, and gender from the query
-                        - e-commerce platforms mentioned in the query
-                        - identify if the query mentions any platforms not in our supported list (myntra, meesho, ajio, flipkart)
-                        
-                        For platforms, you should:
-                        1. Identify all platforms mentioned in the query
-                        2. Separate them into supported (myntra, meesho, ajio, flipkart) and unsupported platforms
-                        3. Set has_only_unsupported_platforms to true if the query only mentions unsupported platforms
-                        4. Set source_from to the list of supported platforms mentioned
-                        5. Set unsupported_platforms to the list of unsupported platforms mentioned"""
+                        'content': f"""You are a helpful assistant that standardizes user queries into a structured format matching our StructuredSearchQuery model.
+
+                For e-commerce platforms analysis:
+                - source_from: List of ONLY the supported platforms mentioned in the query
+                - unsupported_platforms: List of platforms mentioned that aren't in our supported list
+                - has_only_unsupported_platforms: Boolean, must be true if query mentions platforms but none are supported, false otherwise
+
+                The list of supported platforms (SourcedFromEnum) is:
+                {[platform.value for platform in SourcedFromEnum]}
+
+                Return a JSON object strictly following the StructuredSearchQuery model structure. Do not include additional fields not in the model. Set fields to null when no relevant information is found, except for has_only_unsupported_platforms which must be a boolean.
+
+                IMPORTANT INSTRUCTIONS:
+                You can always return null for values that are not explicitly mentioned by the user like if the user doesn't mention the sizes in the query, return a null value
+                
+                EXAMPLE OUTPUTS:
+                Query: "find men's black jeans under 2000 on flipkart"
+                {{
+                "item_name": "jeans",
+                "item_colors": ["black"],
+                "item_sizes": null,
+                "min_price": null,
+                "max_price": 2000,
+                "material": null,
+                "gender": "men",
+                "source_from": ["flipkart"],
+                "unsupported_platforms": null,
+                "has_only_unsupported_platforms": false
+                }}
+
+                Query: "white cotton t-shirts on amazon between 500 and 1500"
+                {{
+                "item_name": "t-shirts",
+                "item_colors": ["white"],
+                "item_sizes": null,
+                "min_price": 500,
+                "max_price": 1500,
+                "material": "cotton",
+                "gender": null,
+                "source_from": [],
+                "unsupported_platforms": ["amazon"],
+                "has_only_unsupported_platforms": true
+                }}
+                """
                     },
                     {
                         'role': 'user',
@@ -43,7 +75,7 @@ class ProductSearchSerializer(serializers.Serializer):
                 ],
                 response_format=StructuredSearchQuery
             )
-            
+            print(completion.choices[0].message.parsed)
             return completion.choices[0].message.parsed
             
         except Exception as e:
@@ -79,7 +111,7 @@ class ProductSearchSerializer(serializers.Serializer):
             
         if structured_query.item_sizes:
             parts.append(f"size {' '.join(structured_query.item_sizes)}")
-            
+        
         return " ".join(parts)
     
     def get_source_websites(self) -> Tuple[List[SourcedFromEnum], Optional[str]]:
@@ -108,7 +140,7 @@ class ProductSearchSerializer(serializers.Serializer):
             message = f"We currently don't support the following platforms: {unsupported_list}. We're working on adding support for more platforms."
         
         # If no supported platforms were requested, return empty list with message
-        if not structured_query.source_from:
+        if structured_query.has_only_unsupported_platforms or not structured_query.source_from:
             return [], message
         
         # Return supported platforms and message about unsupported ones
