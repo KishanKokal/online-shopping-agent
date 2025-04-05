@@ -5,6 +5,12 @@
 - `server/` - Python Django backend
 - `client/` - React frontend
 
+## Architecture Overview
+
+The following diagram illustrates the high-level architecture and workflow of the online shopping agent:
+
+![Architecture Diagram](./online-shopping-agent.svg)
+
 ## Server Setup
 
 ### 1. Create a Virtual Environment
