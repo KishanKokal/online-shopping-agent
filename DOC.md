@@ -24,6 +24,8 @@ The following diagram illustrates the high-level architecture and workflow of th
 | | Log Processing | ❌ |
 | | - File watcher service for log changes | ❌ |
 | | - Custom log parser for non-standard formats | ❌ |
+| | Product Search | ❌ |
+| | - Pagination through all available products | ❌ |
 
 ## User Interface Design
 
